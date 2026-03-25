@@ -1,9 +1,9 @@
 ## translate.nim -- Optional pre/post translation layer.
 {.experimental: "strict_funcs".}
-import lattice, detect
+import basis/code/choice, detect
 
 type
-  TranslateFn* = proc(text: string, from_lang, to_lang: string): Result[string, BridgeError] {.raises: [].}
+  TranslateFn* = proc(text: string, from_lang, to_lang: string): Choice[string] {.raises: [].}
 
   TranslateLayer* = object
     translate_fn*: TranslateFn
@@ -13,15 +13,15 @@ proc new_translate_layer*(fn: TranslateFn, model_lang: string = "en"): Translate
   TranslateLayer(translate_fn: fn, model_language: model_lang)
 
 proc pre_translate*(layer: TranslateLayer, text: string,
-                    input_lang: Language): Result[string, BridgeError] =
+                    input_lang: Language): Choice[string] =
   if input_lang.code == layer.model_language:
-    Result[string, BridgeError].good(text)
+    good(text)
   else:
     layer.translate_fn(text, input_lang.code, layer.model_language)
 
 proc post_translate*(layer: TranslateLayer, text: string,
-                     target_lang: Language): Result[string, BridgeError] =
+                     target_lang: Language): Choice[string] =
   if target_lang.code == layer.model_language:
-    Result[string, BridgeError].good(text)
+    good(text)
   else:
     layer.translate_fn(text, layer.model_language, target_lang.code)
